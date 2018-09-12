@@ -61,7 +61,7 @@ ns timestamp_of_lidar_packet(const PacketMsg& pm);
  * @param pm packet message populated by read_imu_packet
  * @returns ROS sensor message with fields populated from the OS1 packet
  */
-sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& pm);
+sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& pm, const std::string& imu_frame_id);
 
 /**
  * Accumulate points from a lidar packet message into a PCL point cloud. All
@@ -84,7 +84,7 @@ void add_packet_to_cloud(ns scan_start_ts, ns scan_duration,
  * fromROSMsg in pcl_conversions
  */
 sensor_msgs::PointCloud2 cloud_to_cloud_msg(const CloudOS1& cloud, ns timestamp,
-                                            const std::string& frame = "os1");
+                                            const std::string& frame);
 /**
  * Loop reading from the OS1 client and invoking callbacks with packet messages.
  * Returns when ROS exits. Also runs the ROS event loop via ros::spinOnce().
