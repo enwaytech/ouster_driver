@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   roscpp
   ouster_client
+  tf2
 )
 
 add_message_files(DIRECTORY msg FILES PacketMsg.msg)
@@ -24,7 +25,7 @@ include_directories(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ouster_ros
-  CATKIN_DEPENDS pcl_ros pcl_conversions roscpp message_runtime std_msgs sensor_msgs
+  CATKIN_DEPENDS pcl_ros pcl_conversions roscpp message_runtime std_msgs sensor_msgs tf2
 )
 
 add_library(ouster_ros STATIC src/os1_ros.cpp)

@@ -46,6 +46,12 @@ int main(int argc, char** argv) {
     std::string imu_frame_id = nh.param("imu_frame_id", std::string("os1_imu"));
     std::string lidar_frame_id = nh.param("lidar_frame_id", std::string("os1"));
 
+    std::vector<double> rotation_rpy_body;
+    nh.param("rotation_rpy_body", rotation_rpy_body, rotation_rpy_body);
+
+    tf2::Quaternion rotation_quaternion_body;
+    rotation_quaternion_body.setRPY(rotation_rpy_body.at(0), rotation_rpy_body.at(1), rotation_rpy_body.at(2));
+
     auto lidar_pub = nh.advertise<sensor_msgs::PointCloud2>("points", 10);
     auto imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 10);
 
@@ -56,7 +62,7 @@ int main(int argc, char** argv) {
         });
 
     auto imu_handler = [&](const PacketMsg& p) {
-        imu_pub.publish(ouster_ros::OS1::packet_to_imu_msg(p, imu_frame_id));
+        imu_pub.publish(ouster_ros::OS1::packet_to_imu_msg(p, imu_frame_id, rotation_quaternion_body));
     };
 
     if (replay_mode) {

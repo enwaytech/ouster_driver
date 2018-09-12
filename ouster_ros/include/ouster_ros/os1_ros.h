@@ -7,11 +7,14 @@
 #include <chrono>
 #include <functional>
 #include <string>
+#include <vector>
 
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/utils.h>
 
 #include "ouster_ros/PacketMsg.h"
 #include "ouster/os1.h"
@@ -61,7 +64,7 @@ ns timestamp_of_lidar_packet(const PacketMsg& pm);
  * @param pm packet message populated by read_imu_packet
  * @returns ROS sensor message with fields populated from the OS1 packet
  */
-sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& pm, const std::string& imu_frame_id);
+sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& pm, const std::string& imu_frame_id, const tf2::Quaternion& rotation_quaternion_body);
 
 /**
  * Accumulate points from a lidar packet message into a PCL point cloud. All

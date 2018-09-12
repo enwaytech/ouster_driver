@@ -27,7 +27,7 @@ bool read_lidar_packet(const client& cli, PacketMsg& m) {
     return read_lidar_packet(cli, m.buf.data());
 }
 
-sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& p, const std::string& imu_frame_id) {
+sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& p, const std::string& imu_frame_id, const tf2::Quaternion& rotation_quaternion_body) {
     const double standard_g = 9.80665;
     sensor_msgs::Imu m;
     const uint8_t* buf = p.buf.data();
@@ -57,6 +57,16 @@ sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& p, const std::string& imu_fr
         m.linear_acceleration_covariance[i] = 0.01;
         m.angular_velocity_covariance[i] = 6e-4;
     }
+
+    tf2::Vector3 temp_vec;
+
+    tf2::convert(m.angular_velocity, temp_vec);
+    temp_vec = tf2::quatRotate(rotation_quaternion_body, temp_vec);
+    tf2::convert(temp_vec, m.angular_velocity);
+
+    tf2::convert(m.linear_acceleration, temp_vec);
+    temp_vec = tf2::quatRotate(rotation_quaternion_body, temp_vec);
+    tf2::convert(temp_vec, m.linear_acceleration);
 
     return m;
 }
