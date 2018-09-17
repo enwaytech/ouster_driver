@@ -27,7 +27,63 @@ bool read_lidar_packet(const client& cli, PacketMsg& m) {
     return read_lidar_packet(cli, m.buf.data());
 }
 
-sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& p, const std::string& imu_frame_id, const tf2::Quaternion& rotation_quaternion_body) {
+geometry_msgs::Vector3 BodyFixedNEDtoENU(const geometry_msgs::Vector3 ned) {
+  // (x y z)->(x -y -z)
+  geometry_msgs::Vector3 enu;
+  enu.x = ned.x;
+  enu.y = -ned.y;
+  enu.z = -ned.z;
+  return enu;
+}
+
+sensor_msgs::Imu packet_to_imu_msg_enu(const PacketMsg& p, const std::string& imu_frame_id, const tf2::Quaternion& rotation_quaternion_body) {
+    const double standard_g = 9.80665;
+    sensor_msgs::Imu m;
+    const uint8_t* buf = p.buf.data();
+
+    m.header.stamp.fromNSec(imu_gyro_ts(buf));
+    m.header.frame_id = imu_frame_id;
+
+    m.orientation.x = 0;
+    m.orientation.y = 0;
+    m.orientation.z = 0;
+    m.orientation.w = 0;
+
+    m.linear_acceleration.x = imu_la_x(buf) * standard_g;
+    m.linear_acceleration.y = imu_la_y(buf) * standard_g;
+    m.linear_acceleration.z = imu_la_z(buf) * standard_g;
+
+    m.angular_velocity.x = imu_av_x(buf) * M_PI / 180.0;
+    m.angular_velocity.y = imu_av_y(buf) * M_PI / 180.0;
+    m.angular_velocity.z = imu_av_z(buf) * M_PI / 180.0;
+
+    for (int i = 0; i < 9; i++) {
+        m.orientation_covariance[i] = -1;
+        m.angular_velocity_covariance[i] = 0;
+        m.linear_acceleration_covariance[i] = 0;
+    }
+    for (int i = 0; i < 9; i += 4) {
+        m.linear_acceleration_covariance[i] = 0.01;
+        m.angular_velocity_covariance[i] = 6e-4;
+    }
+
+    tf2::Vector3 temp_vec;
+
+    tf2::convert(m.angular_velocity, temp_vec);
+    temp_vec = tf2::quatRotate(rotation_quaternion_body, temp_vec);
+    tf2::convert(temp_vec, m.angular_velocity);
+
+    tf2::convert(m.linear_acceleration, temp_vec);
+    temp_vec = tf2::quatRotate(rotation_quaternion_body, temp_vec);
+    tf2::convert(temp_vec, m.linear_acceleration);
+
+    m.linear_acceleration = BodyFixedNEDtoENU(m.linear_acceleration);
+    m.angular_velocity = BodyFixedNEDtoENU(m.angular_velocity);
+
+    return m;
+}
+
+sensor_msgs::Imu packet_to_imu_msg_ned(const PacketMsg& p, const std::string& imu_frame_id, const tf2::Quaternion& rotation_quaternion_body) {
     const double standard_g = 9.80665;
     sensor_msgs::Imu m;
     const uint8_t* buf = p.buf.data();

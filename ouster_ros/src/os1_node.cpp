@@ -34,7 +34,7 @@ using ns = std::chrono::nanoseconds;
 using PacketMsg = ouster_ros::PacketMsg;
 
 bool validTimestamp(const ros::Time& msg_time) {
-  const ros::Duration kMaxTimeOffset(1.0);
+  const ros::Duration kMaxTimeOffset(0.3);
   const ros::Time now = ros::Time::now();
   if (msg_time < (now - kMaxTimeOffset)) {
     ROS_WARN_STREAM_THROTTLE(
@@ -58,6 +58,8 @@ int main(int argc, char** argv) {
     auto replay_mode = nh.param("replay", true);
     std::string imu_frame_id = nh.param("imu_frame_id", std::string("os1_imu"));
     std::string lidar_frame_id = nh.param("lidar_frame_id", std::string("os1"));
+    bool ned_to_enu = nh.param("ned_to_enu", true);
+
 
     std::vector<double> rotation_rpy_body;
     nh.param("rotation_rpy_body", rotation_rpy_body, rotation_rpy_body);
@@ -77,11 +79,17 @@ int main(int argc, char** argv) {
         });
 
     auto imu_handler = [&](const PacketMsg& p) {
-        sensor_msgs::Imu msg = ouster_ros::OS1::packet_to_imu_msg(p, imu_frame_id, rotation_quaternion_body);
+        sensor_msgs::Imu msg;
+        if(ned_to_enu) {
+          msg = ouster_ros::OS1::packet_to_imu_msg_enu(p, imu_frame_id, rotation_quaternion_body);
+        } else {
+          msg = ouster_ros::OS1::packet_to_imu_msg_ned(p, imu_frame_id, rotation_quaternion_body);
+        }
         if(validTimestamp(msg.header.stamp)){
             imu_pub.publish(msg);
         }
     };
+
 
     if (replay_mode) {
         auto lidar_packet_sub = nh.subscribe<PacketMsg, const PacketMsg&>(

@@ -59,12 +59,21 @@ ns timestamp_of_imu_packet(const PacketMsg& pm);
  */
 ns timestamp_of_lidar_packet(const PacketMsg& pm);
 
+geometry_msgs::Vector3 BodyFixedNEDtoENU(const geometry_msgs::Vector3 ned);
+
 /**
  * Parse an imu packet message into a ROS imu message
  * @param pm packet message populated by read_imu_packet
  * @returns ROS sensor message with fields populated from the OS1 packet
  */
-sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& pm, const std::string& imu_frame_id, const tf2::Quaternion& rotation_quaternion_body);
+sensor_msgs::Imu packet_to_imu_msg_ned(const PacketMsg& pm, const std::string& imu_frame_id, const tf2::Quaternion& rotation_quaternion_body);
+
+/**
+ * Parse an imu packet message into a ROS imu message
+ * @param pm packet message populated by read_imu_packet
+ * @returns ROS sensor message with fields populated from the OS1 packet
+ */
+sensor_msgs::Imu packet_to_imu_msg_enu(const PacketMsg& pm, const std::string& imu_frame_id, const tf2::Quaternion& rotation_quaternion_body);
 
 /**
  * Accumulate points from a lidar packet message into a PCL point cloud. All
